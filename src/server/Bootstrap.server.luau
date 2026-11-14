@@ -14,9 +14,15 @@ require(Config.Pets)
 require(Config.Eggs)
 require(Shared.Formulas)
 local Remotes = require(Shared.Remotes)
-local DataService = require(ServerScriptService.Server.Services.DataService)
+local Services = ServerScriptService.Server.Services
+local DataService = require(Services.DataService)
+local DevService = require(Services.DevService)
+local PressureService = require(Services.PressureService)
 
 Remotes.init()
+-- Services that listen for loaded data start before DataService loads anyone.
+PressureService.init()
 DataService.init()
+DevService.init()
 
 print("ready")

@@ -6,6 +6,7 @@ local Pearls = require("./Config/Pearls")
 local Pets = require("./Config/Pets")
 local Shells = require("./Config/Shells")
 local Types = require("./Types")
+local Zones = require("./Config/Zones")
 
 type PearlRarityId = Types.PearlRarityId
 type PetRarityId = Types.PetRarityId
@@ -95,6 +96,44 @@ end
 function Formulas.pressureBonus(pearlBonuses: { number }, petBonuses: { number }): number
 	return Formulas.cappedSum(pearlBonuses, Economy.PEARL_BONUS_CAP)
 		+ Formulas.cappedSum(petBonuses, Economy.PET_BONUS_CAP)
+end
+
+-- Unknown ids are skipped: DataService already warned about them when the save loaded.
+function Formulas.equippedPressureBonus(data: Types.PlayerData): number
+	local pearlBonuses = {}
+	for _, id in data.equippedPearls do
+		local pearl = data.pearls[id]
+		if pearl and pearlById[pearl.rarity] then
+			table.insert(pearlBonuses, pearlById[pearl.rarity].equipBonus)
+		end
+	end
+	local petBonuses = {}
+	for _, id in data.equippedPets do
+		local pet = data.pets[id]
+		local species = if pet then speciesById[pet.species] else nil
+		if pet and species then
+			table.insert(petBonuses, Formulas.petBonus(species.rarity, pet.stars))
+		end
+	end
+	return Formulas.pressureBonus(pearlBonuses, petBonuses)
+end
+
+-- Zones are sorted by startDepth (checked in Config.spec).
+function Formulas.zoneProgress(depth: number): Types.ZoneProgress
+	local index = 1
+	for i, zone in Zones do
+		if depth < zone.startDepth then
+			break
+		end
+		index = i
+	end
+	local current = Zones[index]
+	local nextZone = Zones[index + 1]
+	if not nextZone then
+		return { current = current, nextZone = nil, fraction = 1 }
+	end
+	local fraction = (depth - current.startDepth) / (nextZone.startDepth - current.startDepth)
+	return { current = current, nextZone = nextZone, fraction = math.clamp(fraction, 0, 1) }
 end
 
 function Formulas.aquariumSlots(upgrades: number): number

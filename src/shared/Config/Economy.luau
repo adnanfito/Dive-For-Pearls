@@ -10,6 +10,10 @@ return {
 	PRESSURE_UPGRADE_COST_GROWTH = 1.25,
 	PRESSURE_AFK_FATIGUE_SECONDS = 2 * HOUR,
 	PRESSURE_AFK_FATIGUE_RATE = 0.75,
+	-- Timings, not balancing: depth gain is rate * elapsed time, so the tick length does not change it.
+	PRESSURE_TICK_SECONDS = 1,
+	PRESSURE_UPGRADE_COOLDOWN_SECONDS = 0.25,
+	DEV_TEST_COINS = 1_000, -- Studio-only test grant, see DevService
 
 	PEARL_ZONE_VALUE_GROWTH = 4,
 	PEARL_SELL_SECONDS = 30, -- sell price equals this many seconds of display income

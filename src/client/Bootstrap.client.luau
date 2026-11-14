@@ -13,5 +13,8 @@ require(Config:WaitForChild("Pets"))
 require(Config:WaitForChild("Eggs"))
 require(Shared:WaitForChild("Formulas"))
 require(Shared:WaitForChild("Remotes"))
+local PressureController = require(script.Parent.Controllers.PressureController)
+
+PressureController.init()
 
 print("ready")

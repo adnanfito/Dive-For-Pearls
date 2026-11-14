@@ -5,6 +5,7 @@ local Eggs = require("../src/shared/Config/Eggs")
 local Formulas = require("../src/shared/Formulas")
 local Pearls = require("../src/shared/Config/Pearls")
 local Pets = require("../src/shared/Config/Pets")
+local PlayerData = require("../src/shared/PlayerData")
 
 local EPSILON = 1e-9
 local CORAL_REEF_INDEX = 1
@@ -58,6 +59,47 @@ return {
 			Assert.near(Formulas.pressureBonus({ 1.5, 1.5, 1.5 }, {}), Economy.PEARL_BONUS_CAP, EPSILON, "pearl cap")
 			Assert.near(Formulas.pressureBonus({}, { 0.5, 0.5, 0.5 }), Economy.PET_BONUS_CAP, EPSILON, "pet cap")
 			Assert.near(Formulas.pressureBonus({ 0.05 }, { 0.02 }), 0.07, EPSILON, "pearl + pet add")
+		end,
+	},
+	{
+		name = "equipped pressure bonus: pearls + pets, capped, unknown ids skipped",
+		run = function()
+			local data = PlayerData.default(0)
+			Assert.equal(Formulas.equippedPressureBonus(data), 0, "nothing equipped")
+
+			local commonSpecies = Pets.Species[1].id
+			assert(speciesRarity(commonSpecies) == "Common", "first species should be Common")
+			data.pearls["1"] = { rarity = "Gold", zoneId = "ShallowBeach" }
+			data.pets["2"] = { species = commonSpecies, stars = 1 }
+			data.equippedPearls = { "1", "99" }
+			data.equippedPets = { "2" }
+			Assert.near(Formulas.equippedPressureBonus(data), 0.42, EPSILON, "Gold pearl + 1-star Common pet")
+
+			for id = 3, 5 do
+				data.pearls[tostring(id)] = { rarity = "Rainbow", zoneId = "ShallowBeach" }
+			end
+			data.equippedPearls = { "3", "4", "5" }
+			data.equippedPets = {}
+			Assert.near(Formulas.equippedPressureBonus(data), Economy.PEARL_BONUS_CAP, EPSILON, "pearl cap")
+		end,
+	},
+	{
+		name = "zone progress: current zone, next zone, fraction",
+		run = function()
+			local start = Formulas.zoneProgress(0)
+			Assert.equal(start.current.id, "ShallowBeach", "at 0 m")
+			Assert.equal((start.nextZone :: any).id, "CoralReef", "next after beach")
+			Assert.near(start.fraction, 0, EPSILON, "empty bar at 0 m")
+			Assert.near(Formulas.zoneProgress(25).fraction, 0.5, EPSILON, "half way to Coral Reef")
+
+			local reef = Formulas.zoneProgress(125)
+			Assert.equal(reef.current.id, "CoralReef", "at 125 m")
+			Assert.near(reef.fraction, 0.5, EPSILON, "half way from 50 to 200")
+			Assert.equal(Formulas.zoneProgress(50).current.id, "CoralReef", "threshold belongs to the new zone")
+
+			local last = Formulas.zoneProgress(1e12)
+			Assert.equal(last.nextZone, nil, "no zone after the last")
+			Assert.equal(last.fraction, 1, "full bar past the last zone")
 		end,
 	},
 	{

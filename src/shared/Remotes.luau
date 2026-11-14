@@ -1,14 +1,18 @@
 --!strict
 -- Single registry of remotes. The server creates exactly the names listed here; both sides look
--- them up through this module. Lists are empty until the first gameplay feature adds a remote.
+-- them up through this module.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local FOLDER_NAME = "Remotes"
 local CLIENT_WAIT_SECONDS = 10
 
-local EVENT_NAMES: { string } = {}
-local FUNCTION_NAMES: { string } = {}
+local EVENT_NAMES: { string } = {
+	"PressureUpdate", -- server to client only
+}
+local FUNCTION_NAMES: { string } = {
+	"BuyPressureUpgrade",
+}
 
 local Remotes = {}
 

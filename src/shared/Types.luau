@@ -7,6 +7,12 @@ export type Zone = {
 	released: boolean,
 }
 
+export type ZoneProgress = {
+	current: Zone,
+	nextZone: Zone?, -- nil past the last zone
+	fraction: number, -- 0..1 from current.startDepth to nextZone.startDepth
+}
+
 export type PearlRarityId = "White" | "Pink" | "Blue" | "Gold" | "Black" | "Rainbow"
 
 export type PearlRarity = {
@@ -111,6 +117,23 @@ export type PlayerData = {
 	groupRewardClaimed: boolean,
 	redeemedCodes: { [string]: boolean },
 	purchaseIds: { string }, -- recent developer product receipts, so none is granted twice
+}
+
+-- Sent by the server to one player through PressureUpdate; the client only renders it.
+export type PressureState = {
+	inside: boolean,
+	depthLimit: number,
+	gained: number, -- meters added by the last tick
+	level: number,
+	upgradeCost: number,
+	coins: number,
+}
+
+export type PressureUpgradeFailure = "BadRequest" | "NotReady" | "TooFast" | "Stale" | "NotEnoughCoins"
+
+export type PressureUpgradeResult = {
+	ok: boolean,
+	reason: PressureUpgradeFailure?,
 }
 
 export type WeightedEntry<T> = {
