@@ -12,7 +12,8 @@ Core loop: AFK in Pressure Chamber raises Depth Limit → dive deeper zones → 
 - Lint: `selene src`
 - Type check (first time only, download Roblox types: `curl -L -o globalTypes.d.luau https://luau-lsp.pages.dev/type-definitions/globalTypes.None.d.luau`):
   `rojo sourcemap default.project.json -o sourcemap.json` then
-  `luau-lsp analyze --platform=roblox --definitions=@roblox=globalTypes.d.luau --sourcemap=sourcemap.json src`
+  `luau-lsp analyze --platform=roblox --definitions=@roblox=globalTypes.d.luau --sourcemap=sourcemap.json --ignore="**/vendor/**" src`
+  (`vendor/` holds pinned third-party code such as ProfileStore; it is not ours to fix, so its diagnostics are ignored.)
 - Pure-logic tests (no Studio): `lune run tests/run`
 - Sync to Studio: `rojo serve` (human runs it; do not start long-running servers yourself)
 
