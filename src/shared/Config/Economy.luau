@@ -25,8 +25,7 @@ return {
 	PITY_EPIC_HATCHES = 20,
 	PITY_LEGENDARY_HATCHES = 120,
 	PET_SLOTS_START = 1,
-	PET_SLOTS_COIN_MAX = 3, -- free players stop here
-	PET_SLOTS_GAME_PASS_BONUS = 2, -- one Game Pass, on top of the Coin slots
+	PET_SLOTS_COIN_MAX = 3,
 	PET_INVENTORY_MAX = 200,
 	PEARL_INVENTORY_MAX = 300,
 	SHELL_BAG_MAX = 20, -- shells wait here while the aquarium is full

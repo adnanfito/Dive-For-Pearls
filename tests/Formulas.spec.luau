@@ -71,13 +71,11 @@ return {
 		end,
 	},
 	{
-		name = "pet slots: 1 to start, Coins up to 3, Game Pass adds 2",
+		name = "pet slots: 1 to start, Coins up to 3",
 		run = function()
-			Assert.equal(Formulas.petSlots(0, false), 1, "start")
-			Assert.equal(Formulas.petSlots(2, false), 3, "free max")
-			Assert.equal(Formulas.petSlots(5, false), 3, "upgrades past max add nothing")
-			Assert.equal(Formulas.petSlots(0, true), 3, "start with Game Pass")
-			Assert.equal(Formulas.petSlots(2, true), 5, "full max")
+			Assert.equal(Formulas.petSlots(0), 1, "start")
+			Assert.equal(Formulas.petSlots(2), 3, "max")
+			Assert.equal(Formulas.petSlots(5), 3, "upgrades past max add nothing")
 		end,
 	},
 	{

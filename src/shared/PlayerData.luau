@@ -341,7 +341,7 @@ function PlayerData.validate(data: PlayerData): { string }
 	checkLimit(problems, "pets", countKeys(data.pets), Economy.PET_INVENTORY_MAX)
 	checkLimit(problems, "shellBag", #data.shellBag, Economy.SHELL_BAG_MAX)
 	checkLimit(problems, "equippedPearls", #data.equippedPearls, Economy.PEARL_EQUIP_SLOTS_START)
-	checkLimit(problems, "equippedPets", #data.equippedPets, Formulas.petSlots(data.petSlotUpgrades, true))
+	checkLimit(problems, "equippedPets", #data.equippedPets, Formulas.petSlots(data.petSlotUpgrades))
 	checkLimit(
 		problems,
 		"aquarium",

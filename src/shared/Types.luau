@@ -95,7 +95,7 @@ export type PlayerData = {
 	equippedPearls: { string },
 	pets: { [string]: OwnedPet },
 	equippedPets: { string },
-	petSlotUpgrades: number, -- Coin upgrades only; the Game Pass is checked live, never saved
+	petSlotUpgrades: number,
 	pity: PityState,
 	nextItemId: number,
 	lastOnlineAt: number,

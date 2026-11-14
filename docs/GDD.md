@@ -434,6 +434,8 @@ Rumus skala: nilai mutiara = nilai dasar × 4^(indeks zona), dengan Pantai = 0. 
 
 Pity: Epik atau lebih dijamin setiap 20 tetasan, Legendaris atau lebih setiap 120 tetasan. Gabung 3 teman sama: bonus x1,5 per bintang. Total bonus teman dibatasi +100%.
 
+**Slot Teman:** 1 slot di awal, bisa di-upgrade dengan Koin sampai 3 slot (batas untuk pemain gratis). Harga upgrade belum ditentukan. Rencana tambahan +2 slot dengan Robux (Game Pass) menyusul setelah Game Pass dibuat; bukan bagian MVP.
+
 **Akuarium:** 8 slot awal (kerang matang dan mutiara dipajang memakai slot yang sama), +2 slot per upgrade sampai 40. Harga: 100 × 2^(jumlah upgrade) Koin. Offline: 50% Koin, maksimal 8 jam.
 
 **Tiket Telur.** Ada dua angka yang perlu ditentukan: berapa tiket gratis yang bisa didapat pemain, dan berapa harga tiket dalam Robux.
