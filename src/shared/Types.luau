@@ -56,6 +56,63 @@ export type PityState = {
 	sinceLegendary: number,
 }
 
+-- Saved player data. Times are unix seconds (os.time) so ripening continues while offline.
+-- Item maps are keyed by string ids from PlayerData.newItemId; lists hold those ids.
+export type AquariumShell = {
+	tier: ShellTierId,
+	zoneId: string, -- pearl value scales by the zone the shell came from
+	readyAt: number,
+}
+
+export type BagShell = {
+	tier: ShellTierId,
+	zoneId: string,
+}
+
+export type OwnedPearl = {
+	rarity: PearlRarityId,
+	zoneId: string,
+}
+
+export type OwnedPet = {
+	species: string,
+	stars: number,
+}
+
+export type PlayerData = {
+	version: number,
+	depthLimit: number,
+	coins: number,
+	eggTickets: number,
+	pressureLevel: number,
+	aquarium: {
+		upgrades: number,
+		shells: { AquariumShell },
+		displayedPearls: { string },
+	},
+	shellBag: { BagShell },
+	pearls: { [string]: OwnedPearl },
+	equippedPearls: { string },
+	pets: { [string]: OwnedPet },
+	equippedPets: { string },
+	petSlotUpgrades: number, -- Coin upgrades only; the Game Pass is checked live, never saved
+	pity: PityState,
+	nextItemId: number,
+	lastOnlineAt: number,
+	onboarding: {
+		instantShellsLeft: number,
+		freeEggClaimed: boolean,
+	},
+	playtimeRewards: {
+		day: number, -- the reward service resets this block when the day changes
+		seconds: number,
+		claimed: { number }, -- minute marks already claimed today
+	},
+	groupRewardClaimed: boolean,
+	redeemedCodes: { [string]: boolean },
+	purchaseIds: { string }, -- recent developer product receipts, so none is granted twice
+}
+
 export type WeightedEntry<T> = {
 	value: T,
 	weight: number,

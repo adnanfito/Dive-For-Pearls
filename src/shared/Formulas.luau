@@ -87,6 +87,11 @@ function Formulas.petBonus(rarity: PetRarityId, stars: number): number
 	return petRarityRow(rarity).bonus * Economy.PET_STAR_BONUS_GROWTH ^ (stars - 1)
 end
 
+function Formulas.petSlots(upgrades: number, hasGamePass: boolean): number
+	local coinSlots = math.min(Economy.PET_SLOTS_START + upgrades, Economy.PET_SLOTS_COIN_MAX)
+	return coinSlots + if hasGamePass then Economy.PET_SLOTS_GAME_PASS_BONUS else 0
+end
+
 -- Bonuses add (never multiply); each source is capped separately before adding.
 function Formulas.pressureBonus(pearlBonuses: { number }, petBonuses: { number }): number
 	return Formulas.cappedSum(pearlBonuses, Economy.PEARL_BONUS_CAP)

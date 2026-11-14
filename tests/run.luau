@@ -7,8 +7,9 @@ local specs: { [string]: Spec } = {
 	Config = require("./Config.spec"),
 	Formulas = require("./Formulas.spec"),
 	Distribution = require("./Distribution.spec"),
+	PlayerData = require("./PlayerData.spec"),
 }
-local order = { "Config", "Formulas", "Distribution" }
+local order = { "Config", "Formulas", "Distribution", "PlayerData" }
 
 local passed, failed = 0, 0
 for _, specName in order do
