@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(stylua *)",
+      "Bash(selene *)",
+      "Bash(luau-lsp analyze *)",
+      "Bash(rojo sourcemap *)",
+      "Bash(lune run *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)"
+    ],
+    "deny": [
+      "Read(./*.rbxl)",
+      "Read(./*.rbxlx)",
+      "Read(./**/*.rbxl)",
+      "Read(./**/*.rbxlx)",
+      "Read(./sourcemap.json)",
+      "Read(./Packages/**)"
+    ]
+  }
+}

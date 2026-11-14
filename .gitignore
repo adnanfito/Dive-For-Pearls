@@ -1,0 +1,19 @@
+# Roblox place files (large, binary or huge XML; never commit or let agents read)
+*.rbxl
+*.rbxlx
+*.rbxl.lock
+*.rbxlx.lock
+
+# Generated
+sourcemap.json
+globalTypes.d.luau
+Packages/
+ServerPackages/
+
+# Personal Claude Code files
+.claude/settings.local.json
+CLAUDE.local.md
+
+# OS
+.DS_Store
+Thumbs.db
