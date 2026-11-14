@@ -5,6 +5,7 @@ export type Zone = {
 	displayName: string,
 	startDepth: number,
 	released: boolean,
+	metersPerStud: number?,
 }
 
 export type ZoneProgress = {
@@ -134,6 +135,39 @@ export type PressureUpgradeFailure = "BadRequest" | "NotReady" | "TooFast" | "St
 export type PressureUpgradeResult = {
 	ok: boolean,
 	reason: PressureUpgradeFailure?,
+}
+
+-- Sent by the server through DiveUpdate. surfaceY and floorY are world heights: the zone's
+-- water surface and the deepest point the diver's Depth Limit allows.
+export type DiveState = {
+	diving: boolean,
+	zoneId: string?,
+	surfaceY: number,
+	floorY: number,
+	oxygenLeft: number,
+	carried: number,
+	bagCount: number,
+}
+
+-- One shell the server spawned for one diver; only that diver sees and collects it.
+export type DiveShell = {
+	id: number,
+	tier: ShellTierId,
+	position: Vector3,
+}
+
+export type LiftFailure = "BadRequest" | "NotReady" | "TooFast" | "Locked" | "AlreadyDiving" | "TooFar" | "NoWorld"
+
+export type LiftResult = {
+	ok: boolean,
+	reason: LiftFailure?,
+}
+
+export type CollectFailure = "BadRequest" | "NotDiving" | "TooFast" | "Gone" | "TooFar" | "BagFull"
+
+export type CollectResult = {
+	ok: boolean,
+	reason: CollectFailure?,
 }
 
 export type WeightedEntry<T> = {

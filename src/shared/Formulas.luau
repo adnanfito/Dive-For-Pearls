@@ -136,6 +136,39 @@ function Formulas.zoneProgress(depth: number): Types.ZoneProgress
 	return { current = current, nextZone = nextZone, fraction = math.clamp(fraction, 0, 1) }
 end
 
+function Formulas.findZone(zoneId: string): Types.Zone?
+	for _, zone in Zones do
+		if zone.id == zoneId then
+			return zone
+		end
+	end
+	return nil
+end
+
+-- A zone without a map scale has no map yet, so nobody can enter it.
+function Formulas.canEnterZone(zone: Types.Zone, depthLimit: number): boolean
+	return zone.released and zone.metersPerStud ~= nil and depthLimit >= zone.startDepth
+end
+
+local function metersPerStud(zone: Types.Zone): number
+	local scale = zone.metersPerStud
+	assert(scale, `Formulas: zone "{zone.id}" has no metersPerStud`)
+	return scale
+end
+
+function Formulas.depthAt(zone: Types.Zone, studsBelowSurface: number): number
+	return zone.startDepth + math.max(studsBelowSurface, 0) * metersPerStud(zone)
+end
+
+-- How far below the zone's surface (in studs) a diver with this Depth Limit may go.
+function Formulas.limitStuds(zone: Types.Zone, depthLimit: number): number
+	return math.clamp((depthLimit - zone.startDepth) / metersPerStud(zone), 0, Economy.ZONE_HEIGHT_STUDS)
+end
+
+function Formulas.zoneDepthFraction(studsBelowSurface: number): number
+	return math.clamp(studsBelowSurface / Economy.ZONE_HEIGHT_STUDS, 0, 1)
+end
+
 function Formulas.aquariumSlots(upgrades: number): number
 	return math.min(
 		Economy.AQUARIUM_START_SLOTS + Economy.AQUARIUM_SLOTS_PER_UPGRADE * upgrades,
@@ -211,10 +244,14 @@ function Formulas.rollWeighted<T>(entries: { WeightedEntry<T> }, u: number): T
 	return entries[#entries].value
 end
 
-function Formulas.rollShellTier(u: number): ShellTierId
+-- depthFraction is 0 at the zone's surface and 1 at its bottom. Deeper shells scale every tier
+-- except the most common, so better shells get likelier as the diver goes down (GDD "Kerang").
+function Formulas.rollShellTier(depthFraction: number, u: number): ShellTierId
+	local deepBonus = 1 + Economy.DEEP_SHELL_BONUS * math.clamp(depthFraction, 0, 1)
 	local entries: { WeightedEntry<ShellTierId> } = {}
-	for _, row in Shells do
-		table.insert(entries, { value = row.id, weight = row.chance })
+	for index, row in Shells do
+		local weight = if index == 1 then row.chance else row.chance * deepBonus
+		table.insert(entries, { value = row.id, weight = weight })
 	end
 	return Formulas.rollWeighted(entries, u) :: ShellTierId
 end

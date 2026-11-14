@@ -62,6 +62,26 @@ return {
 		end,
 	},
 	{
+		name = "zones: released zones have a map scale that spans up to the next zone",
+		run = function()
+			for index, zone in Zones do
+				local scale = zone.metersPerStud
+				if zone.released then
+					Assert.isTrue(scale ~= nil and scale > 0, `{zone.id} needs a positive metersPerStud`)
+				end
+				local nextZone = Zones[index + 1]
+				if scale and nextZone then
+					Assert.near(
+						scale * Economy.ZONE_HEIGHT_STUDS,
+						nextZone.startDepth - zone.startDepth,
+						EPSILON,
+						`{zone.id} map bottom meets {nextZone.id}`
+					)
+				end
+			end
+		end,
+	},
+	{
 		name = "pearls: fields, odds sum to 100%, order, bonus within cap",
 		run = function()
 			checkRows(Pearls, {

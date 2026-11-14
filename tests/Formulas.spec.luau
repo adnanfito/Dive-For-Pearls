@@ -103,6 +103,34 @@ return {
 		end,
 	},
 	{
+		name = "zone entry: released, has a map, depth limit reaches its start",
+		run = function()
+			local beach = Formulas.findZone("ShallowBeach") :: any
+			local reef = Formulas.findZone("CoralReef") :: any
+			local twilight = Formulas.findZone("TwilightZone") :: any
+			Assert.equal(Formulas.findZone("Nowhere"), nil, "unknown zone")
+			Assert.isTrue(Formulas.canEnterZone(beach, 0), "beach at 0 m")
+			Assert.isTrue(not Formulas.canEnterZone(reef, 49.9), "reef just below 50 m")
+			Assert.isTrue(Formulas.canEnterZone(reef, 50), "reef at 50 m")
+			Assert.isTrue(not Formulas.canEnterZone(twilight, 1e9), "unreleased zone stays locked")
+		end,
+	},
+	{
+		name = "zone depth: studs to meters, limit in studs, depth fraction",
+		run = function()
+			local beach = Formulas.findZone("ShallowBeach") :: any
+			local reef = Formulas.findZone("CoralReef") :: any
+			Assert.near(Formulas.depthAt(beach, 20), 10, EPSILON, "20 studs at 0.5 m/stud")
+			Assert.near(Formulas.depthAt(reef, 100), 200, EPSILON, "reef bottom is 200 m")
+			Assert.near(Formulas.depthAt(reef, -5), 50, EPSILON, "above the surface counts as the start")
+			Assert.near(Formulas.limitStuds(beach, Economy.START_DEPTH_LIMIT), 20, EPSILON, "new player at beach")
+			Assert.near(Formulas.limitStuds(reef, 124), 74 / 1.5, EPSILON, "124 m in the reef")
+			Assert.near(Formulas.limitStuds(reef, 1e6), Economy.ZONE_HEIGHT_STUDS, EPSILON, "capped at the map")
+			Assert.near(Formulas.zoneDepthFraction(50), 0.5, EPSILON, "half way down")
+			Assert.near(Formulas.zoneDepthFraction(500), 1, EPSILON, "clamped at the bottom")
+		end,
+	},
+	{
 		name = "pet bonus grows x1.5 per star, stars limited to 1..3",
 		run = function()
 			Assert.near(Formulas.petBonus("Common", 1), 0.02, EPSILON, "1 star")

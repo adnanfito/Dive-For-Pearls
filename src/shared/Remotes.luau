@@ -9,9 +9,14 @@ local CLIENT_WAIT_SECONDS = 10
 
 local EVENT_NAMES: { string } = {
 	"PressureUpdate", -- server to client only
+	"DiveUpdate", -- server to client only
+	"DiveShells", -- server to client only
+	"RequestSurface",
 }
 local FUNCTION_NAMES: { string } = {
 	"BuyPressureUpgrade",
+	"UseLift",
+	"CollectShell",
 }
 
 local Remotes = {}

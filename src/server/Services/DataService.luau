@@ -14,6 +14,7 @@ local Types = require(ReplicatedStorage.Shared.Types)
 type PlayerData = Types.PlayerData
 type Profile = ProfileStore.Profile<any>
 type LoadedCallback = (player: Player, data: PlayerData) -> ()
+type ReleasingCallback = LoadedCallback
 
 -- Studio gets its own store so playtests never touch live saves.
 local STORE_NAME = if RunService:IsStudio() then "PlayerData_Studio" else "PlayerData"
@@ -29,6 +30,7 @@ local KICK_SESSION_ENDED = "You joined from another server. See you there!"
 local store = ProfileStore.New(STORE_NAME)
 local profiles: { [Player]: Profile } = {}
 local loadedCallbacks: { LoadedCallback } = {}
+local releasingCallbacks: { ReleasingCallback } = {}
 
 local DataService = {}
 
@@ -101,6 +103,11 @@ end
 local function releasePlayer(player: Player)
 	local profile = profiles[player]
 	if profile then
+		if profile:IsActive() then
+			for _, callback in releasingCallbacks do
+				callback(player, profile.Data)
+			end
+		end
 		profile:EndSession()
 	end
 end
@@ -114,6 +121,12 @@ end
 -- Register before init so no player is missed.
 function DataService.onLoaded(callback: LoadedCallback)
 	table.insert(loadedCallbacks, callback)
+end
+
+-- Runs just before a leaving player's save is closed, so services can write session-only state
+-- (such as shells carried mid-dive) into it. Callbacks must not yield.
+function DataService.onReleasing(callback: ReleasingCallback)
+	table.insert(releasingCallbacks, callback)
 end
 
 function DataService.init()

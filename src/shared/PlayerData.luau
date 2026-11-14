@@ -78,7 +78,7 @@ PlayerData.CURRENT_VERSION = CURRENT_VERSION
 function PlayerData.default(now: number): PlayerData
 	return {
 		version = CURRENT_VERSION,
-		depthLimit = 0,
+		depthLimit = Economy.START_DEPTH_LIMIT,
 		coins = 0,
 		eggTickets = 0,
 		pressureLevel = 1,

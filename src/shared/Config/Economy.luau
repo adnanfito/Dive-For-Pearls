@@ -14,6 +14,22 @@ return {
 	PRESSURE_TICK_SECONDS = 1,
 	PRESSURE_UPGRADE_COOLDOWN_SECONDS = 0.25,
 	DEV_TEST_COINS = 1_000, -- Studio-only test grant, see DevService
+	START_DEPTH_LIMIT = 10, -- lets a new player dive at Shallow Beach before the chamber
+
+	DIVE_OXYGEN_SECONDS = 90,
+	SHELLS_PER_DIVE = 12,
+	DEEP_SHELL_BONUS = 1.0, -- non-Common shell odds reach 1 + this at the bottom of a zone
+	ZONE_HEIGHT_STUDS = 100, -- every zone map is this tall; Zones.metersPerStud sets its meters
+	-- Timings and tolerances, not balancing.
+	DIVE_TICK_SECONDS = 0.25,
+	DIVE_REQUEST_COOLDOWN_SECONDS = 1,
+	LIFT_RADIUS_STUDS = 15,
+	-- Generous because the server sees the character slightly behind where the client drew it.
+	SHELL_COLLECT_RADIUS_STUDS = 10,
+	SHELL_TOUCH_RADIUS_STUDS = 5, -- how close the client gets before it asks to collect
+	SHELL_COLLECT_COOLDOWN_SECONDS = 0.1,
+	DEPTH_LIMIT_TOLERANCE_STUDS = 4, -- the server snaps a diver back only past this
+	DEPTH_PUSH_SPEED = 12, -- studs per second the client floats a diver up from the limit
 
 	PEARL_ZONE_VALUE_GROWTH = 4,
 	PEARL_SELL_SECONDS = 30, -- sell price equals this many seconds of display income

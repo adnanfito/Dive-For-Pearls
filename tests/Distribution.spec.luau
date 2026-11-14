@@ -58,7 +58,7 @@ return {
 			math.randomseed(SEED)
 			local counts = {}
 			for _ = 1, ROLLS do
-				local tier = Formulas.rollShellTier(math.random())
+				local tier = Formulas.rollShellTier(0, math.random())
 				counts[tier] = (counts[tier] or 0) + 1
 			end
 			local expected = {}
@@ -66,6 +66,27 @@ return {
 				expected[row.id] = row.chance / 100
 			end
 			checkDistribution(counts, expected, "shell")
+		end,
+	},
+	{
+		name = "shell tiers at a zone's bottom scale non-Common odds by 1 + DEEP_SHELL_BONUS",
+		run = function()
+			math.randomseed(SEED)
+			local counts = {}
+			for _ = 1, ROLLS do
+				local tier = Formulas.rollShellTier(1, math.random())
+				counts[tier] = (counts[tier] or 0) + 1
+			end
+			local scale = 1 + Economy.DEEP_SHELL_BONUS
+			local total = 0
+			for index, row in Shells do
+				total += if index == 1 then row.chance else row.chance * scale
+			end
+			local expected = {}
+			for index, row in Shells do
+				expected[row.id] = (if index == 1 then row.chance else row.chance * scale) / total
+			end
+			checkDistribution(counts, expected, "deep shell")
 		end,
 	},
 	{
