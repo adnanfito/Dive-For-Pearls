@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
+local AudioController = require("./AudioController")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Economy = require(Shared:WaitForChild("Config"):WaitForChild("Economy"))
 
@@ -124,6 +125,7 @@ function AmbientController.init()
 	RunService.RenderStepped:Connect(function()
 		swim(os.clock())
 		local fraction = cameraDepthFraction(zones)
+		AudioController.setUnderwater(fraction ~= nil)
 		tint.TintColor = if fraction then baseTint:Lerp(DEEP_TINT, fraction) else baseTint
 		tint.Brightness = if fraction then baseBrightness - DEEP_BRIGHTNESS_DROP * fraction else baseBrightness
 	end)

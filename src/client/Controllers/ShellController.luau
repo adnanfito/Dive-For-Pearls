@@ -7,6 +7,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
+local AudioController = require("./AudioController")
 local Gui = require("../Gui")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Economy = require(Shared:WaitForChild("Config"):WaitForChild("Economy"))
@@ -21,6 +22,9 @@ local BOB_SPEED = 2
 local SPIN_SPEED = 0.8
 local POP_INFO = TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.In)
 local POP_SCALE = 0.05
+local BURST_COUNT = 14
+-- Tiers that also get the sparkly chime when collected.
+local SPECIAL_TIERS: { [string]: boolean } = { Glowing = true, Rare = true, Giant = true }
 -- Light and sparkle per tier; Common gets a soft light only so it is still easy to spot.
 type Glow = { color: Color3, brightness: number, range: number, sparkles: number }
 local GLOWS: { [string]: Glow } = {
@@ -99,8 +103,12 @@ local function animate(drawn: { [number]: Drawn }, now: number)
 	end
 end
 
--- Shrinks the shell away instead of making it vanish in one frame.
+-- Shrinks the shell away with a sparkle burst instead of making it vanish in one frame.
 local function pop(model: Model)
+	local sparkles = model:FindFirstChildWhichIsA("ParticleEmitter", true)
+	if sparkles then
+		sparkles:Emit(BURST_COUNT)
+	end
 	local value = Instance.new("NumberValue")
 	value.Value = model:GetScale()
 	value.Changed:Connect(function(scale)
@@ -152,6 +160,9 @@ function ShellController.init()
 		if (result.ok or result.reason == "Gone") and drawn[entry.shell.id] == entry then
 			drawn[entry.shell.id] = nil
 			pop(entry.model)
+		end
+		if result.ok then
+			AudioController.play(if SPECIAL_TIERS[entry.shell.tier] then "CollectRare" else "Collect")
 		end
 	end
 
