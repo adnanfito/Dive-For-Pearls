@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
+local Effects = require("../Effects")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared:WaitForChild("Remotes"))
 local Types = require(Shared:WaitForChild("Types"))
@@ -21,6 +22,7 @@ local BOB_SPEED = 1.6
 local FLOAT_RESPONSIVENESS = 6
 local FLOAT_FORCE_FACTOR = 4 -- times the character's weight, so it can hold the height
 local EFFECT_NAME = "ChamberFloat"
+local BUBBLE_RATE = 6
 
 type Float = {
 	character: Model,
@@ -30,23 +32,6 @@ type Float = {
 }
 
 local PressureFloatController = {}
-
-local function makeBubbles(parent: BasePart): ParticleEmitter
-	local bubbles = Instance.new("ParticleEmitter")
-	bubbles.Name = EFFECT_NAME
-	bubbles.Color = ColorSequence.new(Color3.fromRGB(230, 250, 255))
-	bubbles.LightEmission = 0.4
-	bubbles.Rate = 6
-	bubbles.Lifetime = NumberRange.new(1.5, 2.5)
-	bubbles.Speed = NumberRange.new(2, 3.5)
-	bubbles.EmissionDirection = Enum.NormalId.Top
-	bubbles.SpreadAngle = Vector2.new(15, 15)
-	bubbles.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 0.5) })
-	bubbles.Transparency =
-		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 0.9) })
-	bubbles.Parent = parent
-	return bubbles
-end
 
 -- The default Animate script carries a swim animation; R6 rigs have none and just float.
 local function playSwim(character: Model, humanoid: Humanoid): AnimationTrack?
@@ -87,7 +72,7 @@ local function startFloat(zone: BasePart): Float?
 	-- A small hop breaks the floor contact so the float can take over.
 	humanoid.Jump = true
 	local head = character:FindFirstChild("Head")
-	local bubbles = makeBubbles(if head and head:IsA("BasePart") then head else root)
+	local bubbles = Effects.bubbles(if head and head:IsA("BasePart") then head else root, EFFECT_NAME, BUBBLE_RATE)
 	return {
 		character = character,
 		instances = { attachment, align, bubbles },

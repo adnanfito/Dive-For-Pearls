@@ -2,6 +2,7 @@
 -- Renders the dive HUD (StarterGui.DiveGui and DiveFxGui, built in Studio) from the state the
 -- server sends, and sends the Up request. At the Depth Limit it floats the diver back up so the
 -- limit feels smooth; the server enforces the same limit on its own.
+local ContextActionService = game:GetService("ContextActionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -29,6 +30,14 @@ local ARROW_REST = UDim2.fromScale(0.15, 0.1)
 local ARROW_HOP = 0.07 -- share of the button height the arrow hops while oxygen is low
 local VIGNETTE_RANGE = 0.5
 local PRESSURE_GLOW = Color3.fromRGB(255, 60, 60)
+-- GDD "Batas tekanan": the screen edges darken over the last 10% before the limit.
+local NEAR_LIMIT_FRACTION = 0.9
+local NEAR_LIMIT_GLOW = Color3.fromRGB(5, 15, 40)
+local NEAR_LIMIT_DARKEST = 0.3
+-- Stops pulling down just above the limit so the push-up there does not fight the button.
+local DIVE_DOWN_MARGIN_STUDS = 1
+local DIVE_DOWN_ACTION = "DiveDown"
+local DIVE_DOWN_KEY = Enum.KeyCode.C
 local LOW_OXYGEN_GLOW = Color3.fromRGB(60, 150, 255)
 local OXYGEN_COLORS = ColorSequence.new(Color3.fromRGB(110, 235, 255), Color3.fromRGB(30, 150, 255))
 local LOW_OXYGEN_COLORS = ColorSequence.new(Color3.fromRGB(255, 150, 130), Color3.fromRGB(230, 50, 50))
@@ -52,6 +61,7 @@ type Ui = {
 	upButton: GuiButton,
 	upStroke: UIStroke,
 	upArrow: GuiObject,
+	downButton: GuiButton,
 	banner: TextLabel,
 	vignette: GuiObject,
 }
@@ -62,6 +72,8 @@ type View = {
 	carried: number,
 	lowOxygen: boolean,
 	pressureUntil: number,
+	holdingDown: boolean,
+	limitFraction: number, -- how far down toward the Depth Limit, 0 at the surface
 }
 
 local DiveController = {}
@@ -93,6 +105,7 @@ local function findUi(): Ui
 		upButton = upButton,
 		upStroke = Gui.waitFor(upButton, "UIStroke") :: UIStroke,
 		upArrow = Gui.waitFor(upButton, "Arrow") :: GuiObject,
+		downButton = Gui.waitFor(gui, "DownButton") :: GuiButton,
 		banner = Gui.waitFor(gui, "ZoneBanner") :: TextLabel,
 		vignette = Gui.waitFor(Gui.screen("DiveFxGui"), "Vignette") :: GuiObject,
 	}
@@ -160,7 +173,7 @@ end
 
 -- Depth is drawn from the local character every frame so the number and marker move smoothly.
 -- Returns true while the diver is below the limit and being floated back up.
-local function updateDepth(ui: Ui, state: Types.DiveState, zone: Types.Zone): boolean
+local function updateDepth(ui: Ui, view: View, state: Types.DiveState, zone: Types.Zone): boolean
 	local root = Gui.localRoot()
 	if not root then
 		return false
@@ -169,12 +182,18 @@ local function updateDepth(ui: Ui, state: Types.DiveState, zone: Types.Zone): bo
 	local studs = state.surfaceY - y
 	ui.depthLabel.Text = `⬇ {math.floor(Formulas.depthAt(zone, studs))} m`
 	ui.marker.Position = UDim2.fromScale(0.5, Formulas.zoneDepthFraction(studs))
-	if y >= state.floorY then
-		return false
-	end
+	view.limitFraction = studs / math.max(state.surfaceY - state.floorY, 1)
 	local velocity = root.AssemblyLinearVelocity
-	root.AssemblyLinearVelocity = Vector3.new(velocity.X, math.max(velocity.Y, Economy.DEPTH_PUSH_SPEED), velocity.Z)
-	return true
+	if y < state.floorY then
+		root.AssemblyLinearVelocity =
+			Vector3.new(velocity.X, math.max(velocity.Y, Economy.DEPTH_PUSH_SPEED), velocity.Z)
+		return true
+	end
+	if view.holdingDown and y > state.floorY + DIVE_DOWN_MARGIN_STUDS then
+		root.AssemblyLinearVelocity =
+			Vector3.new(velocity.X, math.min(velocity.Y, -Economy.DIVE_DOWN_SPEED), velocity.Z)
+	end
+	return false
 end
 
 local function setVignette(ui: Ui, color: Color3?, transparency: number)
@@ -201,15 +220,53 @@ local function updateEffects(ui: Ui, view: View, now: number)
 		setVignette(ui, PRESSURE_GLOW, PRESSURE_VIGNETTE)
 	elseif view.lowOxygen then
 		setVignette(ui, LOW_OXYGEN_GLOW, VIGNETTE_MIN + VIGNETTE_RANGE * pulse)
+	elseif view.limitFraction >= NEAR_LIMIT_FRACTION then
+		local closeness = math.clamp((view.limitFraction - NEAR_LIMIT_FRACTION) / (1 - NEAR_LIMIT_FRACTION), 0, 1)
+		setVignette(ui, NEAR_LIMIT_GLOW, 1 - (1 - NEAR_LIMIT_DARKEST) * closeness)
 	else
 		setVignette(ui, nil, 1)
 	end
 end
 
+-- Held, not tapped: the diver sinks while a finger (or the C key) stays down. The touch is
+-- followed until it lifts, because the finger can slide off the button first.
+local function bindDiveDown(ui: Ui, view: View)
+	Gui.bindPress(ui.downButton)
+	ui.downButton.InputBegan:Connect(function(input)
+		local kind = input.UserInputType
+		if kind ~= Enum.UserInputType.Touch and kind ~= Enum.UserInputType.MouseButton1 then
+			return
+		end
+		view.holdingDown = true
+		local watch: RBXScriptConnection
+		watch = input:GetPropertyChangedSignal("UserInputState"):Connect(function()
+			if
+				input.UserInputState == Enum.UserInputState.End
+				or input.UserInputState == Enum.UserInputState.Cancel
+			then
+				view.holdingDown = false
+				watch:Disconnect()
+			end
+		end)
+	end)
+	ContextActionService:BindAction(DIVE_DOWN_ACTION, function(_, inputState)
+		view.holdingDown = inputState == Enum.UserInputState.Begin
+		return Enum.ContextActionResult.Pass
+	end, false, DIVE_DOWN_KEY)
+end
+
 function DiveController.init()
 	local ui = findUi()
 	local surfaceEvent = Remotes.getEvent("RequestSurface")
-	local view: View = { state = nil, zone = nil, carried = 0, lowOxygen = false, pressureUntil = 0 }
+	local view: View = {
+		state = nil,
+		zone = nil,
+		carried = 0,
+		lowOxygen = false,
+		pressureUntil = 0,
+		holdingDown = false,
+		limitFraction = 0,
+	}
 
 	Remotes.getEvent("DiveUpdate").OnClientEvent:Connect(function(state: Types.DiveState)
 		render(ui, view, state)
@@ -222,7 +279,7 @@ function DiveController.init()
 			setVignette(ui, nil, 1)
 			return
 		end
-		if updateDepth(ui, state, zone) then
+		if updateDepth(ui, view, state, zone) then
 			view.pressureUntil = now + PRESSURE_MESSAGE_SECONDS
 		end
 		updateEffects(ui, view, now)
@@ -233,6 +290,7 @@ function DiveController.init()
 		AudioController.play("Click")
 		surfaceEvent:FireServer()
 	end)
+	bindDiveDown(ui, view)
 end
 
 return DiveController

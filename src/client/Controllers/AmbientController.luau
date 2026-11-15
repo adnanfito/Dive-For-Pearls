@@ -1,6 +1,7 @@
 --!strict
 -- Client-only ambience in the dive zones: fish swim in loose circles around their group, and the
--- screen tint deepens as the camera goes down (GDD "Visual dan UX": deep water gets darker).
+-- screen tint deepens as the camera goes down (GDD "Visual dan UX": deep water gets darker). When
+-- the diver's Depth Limit is inside the zone, the light also fades on the way down to that limit.
 -- Reads Workspace.DiveZones.<zoneId>.{Surface, Scenery.Fish}, built in Studio.
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,6 +11,8 @@ local Workspace = game:GetService("Workspace")
 local AudioController = require("./AudioController")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Economy = require(Shared:WaitForChild("Config"):WaitForChild("Economy"))
+local Remotes = require(Shared:WaitForChild("Remotes"))
+local Types = require(Shared:WaitForChild("Types"))
 
 local ZONES_FOLDER_NAME = "DiveZones"
 local SURFACE_NAME = "Surface"
@@ -18,6 +21,9 @@ local WAIT_SECONDS = 10
 local TINT_NAME = "ColorCorrection"
 local DEEP_TINT = Color3.fromRGB(125, 180, 255)
 local DEEP_BRIGHTNESS_DROP = 0.12
+local LIMIT_TINT = Color3.fromRGB(30, 55, 115)
+local LIMIT_BRIGHTNESS_DROP = 0.25
+local LIMIT_DARK_START = 0.5 -- share of the way down to the limit where the light starts to fade
 local FISH_SPEED = 0.35 -- radians per second around the group centre
 local FISH_BOB = 0.8
 local FISH_MIN_RADIUS = 6
@@ -97,6 +103,21 @@ local function cameraDepthFraction(zones: Instance): number?
 	return nil
 end
 
+-- 0 until halfway down to the Depth Limit, then up to 1 at the limit. 0 when the limit is the
+-- zone floor, because then nothing presses on the diver.
+local function limitDarkness(dive: Types.DiveState?): number
+	local camera = Workspace.CurrentCamera
+	if not dive or not dive.diving or not camera then
+		return 0
+	end
+	local limitStuds = dive.surfaceY - dive.floorY
+	if limitStuds >= Economy.ZONE_HEIGHT_STUDS or limitStuds <= 0 then
+		return 0
+	end
+	local fraction = (dive.surfaceY - camera.CFrame.Position.Y) / limitStuds
+	return math.clamp((fraction - LIMIT_DARK_START) / (1 - LIMIT_DARK_START), 0, 1)
+end
+
 function AmbientController.init()
 	local zones = Workspace:WaitForChild(ZONES_FOLDER_NAME, WAIT_SECONDS)
 	local tint = Lighting:FindFirstChild(TINT_NAME)
@@ -106,6 +127,10 @@ function AmbientController.init()
 	end
 	local baseTint = tint.TintColor
 	local baseBrightness = tint.Brightness
+	local dive: Types.DiveState? = nil
+	Remotes.getEvent("DiveUpdate").OnClientEvent:Connect(function(state: Types.DiveState)
+		dive = state
+	end)
 
 	-- Streaming can add fish later, so new ones are picked up as they arrive.
 	local function watch(instance: Instance)
@@ -126,8 +151,10 @@ function AmbientController.init()
 		swim(os.clock())
 		local fraction = cameraDepthFraction(zones)
 		AudioController.setUnderwater(fraction ~= nil)
-		tint.TintColor = if fraction then baseTint:Lerp(DEEP_TINT, fraction) else baseTint
-		tint.Brightness = if fraction then baseBrightness - DEEP_BRIGHTNESS_DROP * fraction else baseBrightness
+		local darkness = if fraction then limitDarkness(dive) else 0
+		local depthTint = if fraction then baseTint:Lerp(DEEP_TINT, fraction) else baseTint
+		tint.TintColor = depthTint:Lerp(LIMIT_TINT, darkness)
+		tint.Brightness = baseBrightness - DEEP_BRIGHTNESS_DROP * (fraction or 0) - LIMIT_BRIGHTNESS_DROP * darkness
 	end)
 end
 

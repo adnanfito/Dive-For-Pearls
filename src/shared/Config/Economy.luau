@@ -30,6 +30,7 @@ return {
 	SHELL_COLLECT_COOLDOWN_SECONDS = 0.1,
 	DEPTH_LIMIT_TOLERANCE_STUDS = 4, -- the server snaps a diver back only past this
 	DEPTH_PUSH_SPEED = 12, -- studs per second the client floats a diver up from the limit
+	DIVE_DOWN_SPEED = 16, -- studs per second while the dive button is held
 
 	PEARL_ZONE_VALUE_GROWTH = 4,
 	PEARL_SELL_SECONDS = 30, -- sell price equals this many seconds of display income
