@@ -156,6 +156,17 @@ export type DiveShell = {
 	position: Vector3,
 }
 
+-- Sent by the server through DiveNotice when a dive ends or a portal turns the diver away
+-- (PortalLocked: not deep enough yet; PortalSoon: the next zone is not released).
+-- shells: carried shells saved (Safe) or lost (Fainted). needDepth: the next zone's start depth.
+export type DiveNoticeKind = "Safe" | "Fainted" | "PortalLocked" | "PortalSoon"
+
+export type DiveNotice = {
+	kind: DiveNoticeKind,
+	shells: number,
+	needDepth: number,
+}
+
 export type LiftFailure = "BadRequest" | "NotReady" | "TooFast" | "Locked" | "AlreadyDiving" | "TooFar" | "NoWorld"
 
 export type LiftResult = {

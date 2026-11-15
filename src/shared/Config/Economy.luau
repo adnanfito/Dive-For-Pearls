@@ -14,6 +14,7 @@ return {
 	PRESSURE_TICK_SECONDS = 1,
 	PRESSURE_UPGRADE_COOLDOWN_SECONDS = 0.25,
 	DEV_TEST_COINS = 1_000, -- Studio-only test grant, see DevService
+	DEV_TEST_DEPTH = 50, -- Studio-only test grant in meters, see DevService
 	START_DEPTH_LIMIT = 10, -- lets a new player dive at Shallow Beach before the chamber
 
 	DIVE_OXYGEN_SECONDS = 90,
@@ -31,6 +32,12 @@ return {
 	DEPTH_LIMIT_TOLERANCE_STUDS = 4, -- the server snaps a diver back only past this
 	DEPTH_PUSH_SPEED = 12, -- studs per second the client floats a diver up from the limit
 	DIVE_DOWN_SPEED = 16, -- studs per second while the dive button is held
+	DIVE_START_DEPTH_STUDS = 2, -- a dive starts once the character is this far under the water
+	-- A diver is back on land (and the shells are safe) once this far above the water line;
+	-- a swimmer at the surface floats lower than this.
+	SURFACE_CLEARANCE_STUDS = 2.5,
+	PORTAL_RADIUS_STUDS = 8,
+	PORTAL_NOTICE_COOLDOWN_SECONDS = 3,
 
 	PEARL_ZONE_VALUE_GROWTH = 4,
 	PEARL_SELL_SECONDS = 30, -- sell price equals this many seconds of display income

@@ -65,18 +65,25 @@ function ShellService.startDive(
 	shellsEvent:FireClient(player, sent)
 end
 
--- data is nil only when the save already closed; then the carried shells cannot be kept.
-function ShellService.finishDive(player: Player, data: PlayerData?)
+-- keep is false when the diver fainted: carried shells are only safe once the diver reaches land.
+-- Returns how many carried shells were saved or lost.
+function ShellService.finishDive(player: Player, data: PlayerData?, keep: boolean): number
 	local dive = dives[player]
 	if not dive then
-		return
+		return 0
 	end
 	dives[player] = nil
+	if player.Parent == Players then
+		shellsEvent:FireClient(player, {})
+	end
+	if not keep then
+		return #dive.carried
+	end
 	if not data then
 		if #dive.carried > 0 then
 			warn(`ShellService: {player.Name} ({player.UserId}) lost {#dive.carried} carried shells; save closed`)
 		end
-		return
+		return #dive.carried
 	end
 	for _, shell in dive.carried do
 		-- collect() keeps bag + carried within the max, so this only trips if that check breaks.
@@ -86,9 +93,7 @@ function ShellService.finishDive(player: Player, data: PlayerData?)
 		end
 		table.insert(data.shellBag, shell)
 	end
-	if player.Parent == Players then
-		shellsEvent:FireClient(player, {})
-	end
+	return #dive.carried
 end
 
 function ShellService.carriedCount(player: Player): number

@@ -1,7 +1,7 @@
 --!strict
 -- Renders the dive HUD (StarterGui.DiveGui and DiveFxGui, built in Studio) from the state the
--- server sends, and sends the Up request. At the Depth Limit it floats the diver back up so the
--- limit feels smooth; the server enforces the same limit on its own.
+-- server sends, and drives the hold-to-dive button. At the Depth Limit it floats the diver back up
+-- so the limit feels smooth; the server enforces the same limit on its own.
 local ContextActionService = game:GetService("ContextActionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -18,16 +18,17 @@ local Types = require(Shared:WaitForChild("Types"))
 local LOW_OXYGEN_FRACTION = 0.2 -- GDD: the oxygen warning starts at 20%
 local PRESSURE_MESSAGE_SECONDS = 1.5
 local BANNER_SECONDS = 2.5
+local TOAST_SECONDS = 2.5
+local SAFE_COLOR = Color3.fromRGB(120, 255, 140)
+local LOST_COLOR = Color3.fromRGB(255, 110, 100)
+local INFO_COLOR = Color3.fromRGB(255, 230, 120)
 local BAR_INFO = TweenInfo.new(0.25)
 local PULSE_SPEED = 7
 local WOBBLE_SPEED = 18
 local WOBBLE_DEGREES = 3
-local UP_STROKE = 4
-local UP_STROKE_PULSE = 4
 local VIGNETTE_MIN = 0.25
 local PRESSURE_VIGNETTE = 0.45
-local ARROW_REST = UDim2.fromScale(0.15, 0.1)
-local ARROW_HOP = 0.07 -- share of the button height the arrow hops while oxygen is low
+local HINT_HOP = 8 -- pixels the "swim up" hint hops while oxygen is low
 local VIGNETTE_RANGE = 0.5
 local PRESSURE_GLOW = Color3.fromRGB(255, 60, 60)
 -- GDD "Batas tekanan": the screen edges darken over the last 10% before the limit.
@@ -58,10 +59,10 @@ type Ui = {
 	topLabel: TextLabel,
 	bottomLabel: TextLabel,
 	pressureLabel: GuiObject,
-	upButton: GuiButton,
-	upStroke: UIStroke,
-	upArrow: GuiObject,
+	airHint: GuiObject,
+	airHintRest: UDim2,
 	downButton: GuiButton,
+	toast: TextLabel,
 	banner: TextLabel,
 	vignette: GuiObject,
 }
@@ -85,7 +86,8 @@ local function findUi(): Ui
 	local fill = Gui.waitFor(track, "Fill") :: GuiObject
 	local shellPanel = Gui.waitFor(gui, "ShellPanel") :: GuiObject
 	local gauge = Gui.waitFor(gui, "DepthGauge")
-	local upButton = Gui.waitFor(gui, "UpButton") :: GuiButton
+	local airHint = Gui.waitFor(gui, "AirHint") :: GuiObject
+	local fx = Gui.screen("DiveFxGui")
 	return {
 		gui = gui,
 		oxygenFill = fill,
@@ -102,12 +104,12 @@ local function findUi(): Ui
 		topLabel = Gui.waitFor(gauge, "TopLabel") :: TextLabel,
 		bottomLabel = Gui.waitFor(gauge, "BottomLabel") :: TextLabel,
 		pressureLabel = Gui.waitFor(gui, "PressureLabel") :: GuiObject,
-		upButton = upButton,
-		upStroke = Gui.waitFor(upButton, "UIStroke") :: UIStroke,
-		upArrow = Gui.waitFor(upButton, "Arrow") :: GuiObject,
+		airHint = airHint,
+		airHintRest = airHint.Position,
 		downButton = Gui.waitFor(gui, "DownButton") :: GuiButton,
+		toast = Gui.waitFor(fx, "Toast") :: TextLabel,
 		banner = Gui.waitFor(gui, "ZoneBanner") :: TextLabel,
-		vignette = Gui.waitFor(Gui.screen("DiveFxGui"), "Vignette") :: GuiObject,
+		vignette = Gui.waitFor(fx, "Vignette") :: GuiObject,
 	}
 end
 
@@ -139,6 +141,8 @@ local function renderGauge(ui: Ui, zone: Types.Zone, state: Types.DiveState)
 	ui.topLabel.Text = `{zone.startDepth} m`
 	ui.bottomLabel.Text = `{math.floor(Formulas.depthAt(zone, Economy.ZONE_HEIGHT_STUDS))} m`
 	ui.limitLine.Position = UDim2.new(0, -5, Formulas.zoneDepthFraction(limitStuds), 0)
+	-- At the zone floor the limit is not what stops the diver, so the MAX marker would only hide the label.
+	ui.limitLine.Visible = limitStuds < Economy.ZONE_HEIGHT_STUDS
 end
 
 local function showBanner(ui: Ui, zone: Types.Zone)
@@ -214,8 +218,8 @@ local function updateEffects(ui: Ui, view: View, now: number)
 	local pulse = 0.5 + 0.5 * math.sin(now * PULSE_SPEED)
 	ui.pressureLabel.Visible = pressure
 	ui.pressureLabel.Rotation = if pressure then math.sin(now * WOBBLE_SPEED) * WOBBLE_DEGREES else 0
-	ui.upStroke.Thickness = if view.lowOxygen then UP_STROKE + UP_STROKE_PULSE * pulse else UP_STROKE
-	ui.upArrow.Position = if view.lowOxygen then ARROW_REST - UDim2.fromScale(0, ARROW_HOP * pulse) else ARROW_REST
+	ui.airHint.Visible = view.lowOxygen
+	ui.airHint.Position = ui.airHintRest - UDim2.fromOffset(0, HINT_HOP * pulse)
 	if pressure then
 		setVignette(ui, PRESSURE_GLOW, PRESSURE_VIGNETTE)
 	elseif view.lowOxygen then
@@ -255,9 +259,35 @@ local function bindDiveDown(ui: Ui, view: View)
 	end, false, DIVE_DOWN_KEY)
 end
 
+local function showNotice(ui: Ui, notice: Types.DiveNotice)
+	local text, color, sound
+	if notice.kind == "Safe" then
+		if notice.shells == 0 then
+			return
+		end
+		text, color, sound = `Safe! +{notice.shells} shells`, SAFE_COLOR, "CollectRare"
+	elseif notice.kind == "Fainted" then
+		text = if notice.shells > 0 then `Out of air! Lost {notice.shells} shells` else "Out of air!"
+		color, sound = LOST_COLOR, "Warning"
+	elseif notice.kind == "PortalLocked" then
+		text, color, sound = `Need {notice.needDepth} m to go deeper`, INFO_COLOR, "Warning"
+	else
+		text, color, sound = "Coming soon!", INFO_COLOR, "Click"
+	end
+	ui.toast.Text = text
+	ui.toast.TextColor3 = color
+	ui.toast.Visible = true
+	Gui.popIn(ui.toast)
+	AudioController.play(sound)
+	task.delay(TOAST_SECONDS, function()
+		if ui.toast.Text == text then
+			ui.toast.Visible = false
+		end
+	end)
+end
+
 function DiveController.init()
 	local ui = findUi()
-	local surfaceEvent = Remotes.getEvent("RequestSurface")
 	local view: View = {
 		state = nil,
 		zone = nil,
@@ -285,10 +315,8 @@ function DiveController.init()
 		updateEffects(ui, view, now)
 	end)
 
-	Gui.bindPress(ui.upButton)
-	ui.upButton.Activated:Connect(function()
-		AudioController.play("Click")
-		surfaceEvent:FireServer()
+	Remotes.getEvent("DiveNotice").OnClientEvent:Connect(function(notice: Types.DiveNotice)
+		showNotice(ui, notice)
 	end)
 	bindDiveDown(ui, view)
 end

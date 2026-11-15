@@ -92,7 +92,7 @@ AFK di dalam server menaikkan Batas Kedalaman dan memberi Koin penuh; offline ha
 
 ## Dunia dan zona
 
-Setiap zona adalah area terpisah dengan titik mulai kedalamannya sendiri; pemain tidak pernah berenang dari 0 m. Laut nyata dulu sampai Palung Mariana, lalu berlanjut ke laut fantasi tanpa batas.
+Setiap zona adalah area terpisah dengan titik mulai kedalamannya sendiri. Pantai Dangkal menyatu dengan pulau: pemain lompat dari dermaga dan langsung menyelam. Zona yang lebih dalam dimulai di gua berkantong udara di bagian atas zona itu, jadi pemain tidak berenang dari 0 m. Laut nyata dulu sampai Palung Mariana, lalu berlanjut ke laut fantasi tanpa batas.
 
 | Zona | Ambang (mulai) | Tipe | Target waktu main kumulatif | Kapan |
 | --- | --- | --- | --- | --- |
@@ -111,9 +111,9 @@ Aturan untuk zona fantasi berikutnya: ambang zona baru = ambang zona sebelumnya 
 
 Angka di tabel adalah struktur awal, belum balancing final. Nama zona laut nyata mengikuti lapisan laut yang dipakai ilmuwan, jadi ada nilai edukasi yang disukai orang tua.
 
-**Lift Gelembung.** Teleport dari dermaga ke titik mulai zona yang sudah terbuka. Zona yang belum terjangkau tampil terkunci dengan keterangan, misalnya "Butuh 2.000 m (kamu 1.240 m)".
+**Lift Gelembung.** Jalan pintas dari dermaga ke gua zona yang sudah terbuka (Pantai Dangkal tidak perlu lift). Setiap gua punya Lift Gelembung kembali ke dermaga. Zona yang belum terjangkau tampil terkunci dengan keterangan, misalnya "Butuh 2.000 m (kamu 1.240 m)".
 
-**Di dalam zona.** Pemain boleh turun sejauh Batas Kedalamannya. Makin dalam di satu zona, kerangnya makin bagus, jadi kenaikan stat terasa bahkan sebelum zona berikutnya terbuka. Di dasar zona ada gerbang ke zona berikutnya.
+**Di dalam zona.** Pemain boleh turun sejauh Batas Kedalamannya. Makin dalam di satu zona, kerangnya makin bagus, jadi kenaikan stat terasa bahkan sebelum zona berikutnya terbuka. Di dasar zona ada portal ke gua zona berikutnya; portal terkunci sampai Batas Kedalaman mencapai ambang zona itu.
 
 **Batas tekanan (tanpa hukuman berat):**
 
@@ -130,7 +130,7 @@ Angka di tabel adalah struktur awal, belum balancing final. Nama zona laut nyata
 
 Monster dihindari, bukan dilawan; tidak ada mati. Aturannya mudah diingat: tekanan berarti tidak bisa turun, oksigen habis berarti kerang jatuh.
 
-**Satu kali selam.** Oksigen 90 detik (MVP). Kerang tersebar cukup banyak supaya mudah ditemukan. Teman pendamping membantu sesuai kemampuannya. Pemain bisa naik kapan saja lewat tombol "Naik", lalu kembali ke dermaga.
+**Satu kali selam.** Oksigen 90 detik (MVP). Kerang tersebar cukup banyak supaya mudah ditemukan. Teman pendamping membantu sesuai kemampuannya. Tidak ada tombol "Naik": kerang baru aman setelah pemain berenang kembali ke darat (pulau atau dermaga) atau ke gua zona itu, atau lewat portal. Tombol "Selam" ditahan untuk turun lebih cepat.
 
 **Monster.**
 
@@ -140,12 +140,11 @@ Monster dihindari, bukan dilawan; tidak ada mati. Aturannya mudah diingat: tekan
 
 **Kalau oksigen habis:**
 
-1. Oksigen 20%: layar berkedip biru, bunyi peringatan, tombol besar "Naik!".
-2. Oksigen 0: karakter pingsan dengan animasi lucu.
-3. Teman pendamping mendorong pemain ke permukaan (pelampung kalau belum punya teman).
-4. Kerang yang sedang dibawa jatuh ke dasar dan ditandai di peta. Hanya pemiliknya yang bisa memungutnya kembali, dalam batas waktu sekitar 10 menit.
+1. Oksigen 20%: layar berkedip biru, bunyi peringatan, petunjuk besar "Swim up!".
+2. Oksigen 0 (atau karakter reset di bawah air): karakter pingsan dan kembali ke dermaga.
+3. Semua kerang yang sedang dibawa hilang (keputusan 16 Nov 2026). Kerang di tas yang sudah aman tidak hilang.
 
-Tidak ada kerugian permanen selama pemain kembali mengambilnya. Desain ini menjaga ketegangan untuk anak SMP tanpa membuat anak SD frustrasi.
+Ketegangannya ada di perjalanan naik: makin dalam, makin lama berenang kembali ke darat atau gua.
 
 ## Kerang dan mutiara
 

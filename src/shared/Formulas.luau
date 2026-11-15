@@ -145,6 +145,22 @@ function Formulas.findZone(zoneId: string): Types.Zone?
 	return nil
 end
 
+-- The zone after this one in Config order, which its bottom portal leads to.
+function Formulas.nextZone(zone: Types.Zone): Types.Zone?
+	for index, row in Zones do
+		if row.id == zone.id then
+			return Zones[index + 1]
+		end
+	end
+	return nil
+end
+
+-- The first zone (0 m) is entered by swimming out from the island; deeper zones start in a cave
+-- that the Bubble Lift can reach.
+function Formulas.hasLiftStop(zone: Types.Zone): boolean
+	return zone.startDepth > 0
+end
+
 -- A zone without a map scale has no map yet, so nobody can enter it.
 function Formulas.canEnterZone(zone: Types.Zone, depthLimit: number): boolean
 	return zone.released and zone.metersPerStud ~= nil and depthLimit >= zone.startDepth

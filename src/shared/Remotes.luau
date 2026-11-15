@@ -11,7 +11,7 @@ local EVENT_NAMES: { string } = {
 	"PressureUpdate", -- server to client only
 	"DiveUpdate", -- server to client only
 	"DiveShells", -- server to client only
-	"RequestSurface",
+	"DiveNotice", -- server to client only
 }
 local FUNCTION_NAMES: { string } = {
 	"BuyPressureUpgrade",

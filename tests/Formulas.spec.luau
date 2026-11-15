@@ -116,6 +116,18 @@ return {
 		end,
 	},
 	{
+		name = "zone order: portals lead to the next zone, only deeper zones have a lift stop",
+		run = function()
+			local beach = Formulas.findZone("ShallowBeach") :: any
+			local reef = Formulas.findZone("CoralReef") :: any
+			local last = Formulas.findZone("StarSea") :: any
+			Assert.equal(Formulas.nextZone(beach), reef, "beach portal leads to the reef")
+			Assert.equal(Formulas.nextZone(last), nil, "the last zone has no next zone")
+			Assert.isTrue(not Formulas.hasLiftStop(beach), "beach is entered from the shore")
+			Assert.isTrue(Formulas.hasLiftStop(reef), "reef has a cave stop")
+		end,
+	},
+	{
 		name = "zone depth: studs to meters, limit in studs, depth fraction",
 		run = function()
 			local beach = Formulas.findZone("ShallowBeach") :: any

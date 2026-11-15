@@ -1,6 +1,6 @@
 --!strict
 -- The Bubble Lift menu (StarterGui.LiftGui, built in Studio). It opens from the lift's prompt and
--- lists released zones; the server decides the unlock and does the teleport.
+-- lists released zones that have a cave stop; the server decides the unlock and does the teleport.
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -112,7 +112,7 @@ function LiftController.init()
 		clearRows(ui)
 		local depthLimit = shownDepthLimit()
 		for _, zone in Zones do
-			if zone.released then
+			if zone.released and Formulas.hasLiftStop(zone) then
 				addRow(ui, zone, depthLimit, pick)
 			end
 		end
