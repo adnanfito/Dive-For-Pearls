@@ -181,6 +181,53 @@ export type CollectResult = {
 	reason: CollectFailure?,
 }
 
+-- Where an owned pearl is: equipped (pressure bonus), displayed (Coins per second) or stored.
+export type PearlPlace = "Equipped" | "Displayed" | "Stored"
+export type PearlUse = "Equip" | "Display" | "Sell" | "Store"
+
+export type PearlView = {
+	id: string,
+	rarity: PearlRarityId,
+	zoneId: string,
+	place: PearlPlace,
+	coinsPerSecond: number,
+	sellPrice: number,
+	bonus: number,
+}
+
+-- readyIn: seconds left when the server sent it; 0 means ready to open.
+export type AquariumShellView = {
+	tier: ShellTierId,
+	readyIn: number,
+}
+
+-- Sent by the server through AquariumUpdate; the client only renders it.
+export type AquariumState = {
+	hasPlot: boolean,
+	slots: number,
+	shells: { AquariumShellView },
+	pearls: { PearlView },
+	bagCount: number,
+	coinsPerSecond: number,
+	equipSlots: number,
+}
+
+export type AquariumFailure =
+	"BadRequest"
+	| "NotReady"
+	| "TooFast"
+	| "TooFar"
+	| "NotRipe"
+	| "NoRoom"
+	| "PearlsFull"
+	| "Missing"
+
+export type AquariumResult = {
+	ok: boolean,
+	reason: AquariumFailure?,
+	pearl: PearlView?, -- the pearl a shell opened into
+}
+
 export type WeightedEntry<T> = {
 	value: T,
 	weight: number,

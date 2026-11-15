@@ -48,16 +48,10 @@ local function findUi(): Ui
 	}
 end
 
-local function withCommas(value: number): string
-	local digits = string.format("%d", math.floor(value))
-	local grouped = digits:reverse():gsub("(%d%d%d)", "%1,"):reverse()
-	return (grouped:gsub("^,", ""))
-end
-
 local function floatGain(ui: Ui, gained: number)
 	Gui.floatText(
 		ui.gainTemplate,
-		if gained < SMALL_GAIN then string.format("+%.1f m", gained) else `+{withCommas(gained)} m`
+		if gained < SMALL_GAIN then string.format("+%.1f m", gained) else `+{Gui.withCommas(gained)} m`
 	)
 end
 
@@ -65,7 +59,7 @@ local function renderZone(ui: Ui, depth: number)
 	local progress = Formulas.zoneProgress(depth)
 	local nextZone = progress.nextZone
 	ui.zoneLabel.Text = if nextZone
-		then `{nextZone.displayName}: {withCommas(depth)} / {withCommas(nextZone.startDepth)} m`
+		then `{nextZone.displayName}: {Gui.withCommas(depth)} / {Gui.withCommas(nextZone.startDepth)} m`
 		else progress.current.displayName
 	TweenService:Create(ui.barFill, BAR_TWEEN_INFO, { Size = UDim2.fromScale(progress.fraction, 1) }):Play()
 end
@@ -75,14 +69,14 @@ local function render(ui: Ui, state: Types.PressureState)
 	if not state.inside then
 		return
 	end
-	ui.depthLabel.Text = `Depth Limit: {withCommas(state.depthLimit)} m`
+	ui.depthLabel.Text = `Depth Limit: {Gui.withCommas(state.depthLimit)} m`
 	if state.gained > 0 then
 		floatGain(ui, state.gained)
 	end
 	renderZone(ui, state.depthLimit)
 	-- 💰 rather than the coin emoji, which Roblox does not render.
-	ui.coinsLabel.Text = `💰 {withCommas(state.coins)}`
-	ui.upgradeButton.Text = `⬆️ 💰 {withCommas(state.upgradeCost)}`
+	ui.coinsLabel.Text = `💰 {Gui.withCommas(state.coins)}`
+	ui.upgradeButton.Text = `⬆️ 💰 {Gui.withCommas(state.upgradeCost)}`
 	ui.upgradeButton.BackgroundColor3 = if state.coins >= state.upgradeCost then CAN_BUY_COLOR else CANNOT_BUY_COLOR
 end
 

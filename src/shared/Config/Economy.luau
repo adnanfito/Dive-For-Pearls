@@ -66,4 +66,8 @@ return {
 	AQUARIUM_UPGRADE_COST_GROWTH = 2,
 	AQUARIUM_OFFLINE_RATE = 0.5,
 	AQUARIUM_OFFLINE_MAX_SECONDS = 8 * HOUR,
+	-- Timings and tolerances, not balancing.
+	AQUARIUM_TICK_SECONDS = 1,
+	AQUARIUM_ACTION_COOLDOWN_SECONDS = 0.2,
+	AQUARIUM_RADIUS_STUDS = 16, -- how close to their own tank pad a player must be to use it
 }

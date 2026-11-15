@@ -12,11 +12,16 @@ local EVENT_NAMES: { string } = {
 	"DiveUpdate", -- server to client only
 	"DiveShells", -- server to client only
 	"DiveNotice", -- server to client only
+	"AquariumUpdate", -- server to client only
+	"CoinsUpdate", -- server to client only
 }
 local FUNCTION_NAMES: { string } = {
 	"BuyPressureUpgrade",
 	"UseLift",
 	"CollectShell",
+	"PlaceShells",
+	"OpenShell",
+	"UsePearl",
 }
 
 local Remotes = {}

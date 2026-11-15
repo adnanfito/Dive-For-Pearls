@@ -28,6 +28,13 @@ function Gui.screen(name: string): ScreenGui
 	return Gui.waitFor(playerGui, name) :: ScreenGui
 end
 
+-- 12345.6 -> "12,345": whole numbers with thousands separators, for Coins and meters.
+function Gui.withCommas(value: number): string
+	local digits = string.format("%d", math.floor(value))
+	local grouped = digits:reverse():gsub("(%d%d%d)", "%1,"):reverse()
+	return (grouped:gsub("^,", ""))
+end
+
 -- nil while the local character is dead or not spawned yet.
 function Gui.localRoot(): BasePart?
 	local character = Players.LocalPlayer.Character

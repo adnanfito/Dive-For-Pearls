@@ -26,6 +26,16 @@ for rank, row in Pets.Rarities do
 	petRarityRank[row.id] = rank
 end
 
+local zoneIndexById: { [string]: number } = {}
+for index, zone in Zones do
+	zoneIndexById[zone.id] = index - 1
+end
+
+local shellById: { [ShellTierId]: Types.ShellTier } = {}
+for _, row in Shells do
+	shellById[row.id] = row
+end
+
 local speciesById: { [string]: Types.PetSpecies } = {}
 for _, row in Pets.Species do
 	speciesById[row.id] = row
@@ -73,6 +83,44 @@ end
 
 function Formulas.pearlSellPrice(rarity: PearlRarityId, zoneIndex: number): number
 	return Formulas.pearlCoinsPerSecond(rarity, zoneIndex) * Economy.PEARL_SELL_SECONDS
+end
+
+function Formulas.pearlEquipBonus(rarity: PearlRarityId): number
+	return pearlRow(rarity).equipBonus
+end
+
+-- Config row order, starting at 0 for Shallow Beach; pearl values scale by it.
+function Formulas.zoneIndex(zoneId: string): number
+	local index = zoneIndexById[zoneId]
+	assert(index, `Formulas: unknown zone "{zoneId}"`)
+	return index
+end
+
+-- Pearl luck of the shell it came from, capped like every other luck source.
+function Formulas.shellPearlLuck(tier: ShellTierId): number
+	local row = shellById[tier]
+	assert(row, `Formulas: unknown shell tier "{tier}"`)
+	return Formulas.combineLuck({ row.pearlLuck })
+end
+
+function Formulas.shellRipenSeconds(tier: ShellTierId): number
+	local row = shellById[tier]
+	assert(row, `Formulas: unknown shell tier "{tier}"`)
+	return row.ripenSeconds
+end
+
+-- Coins per second from the pearls on display. Unknown ids are skipped: DataService already
+-- warned about them when the save loaded.
+function Formulas.aquariumCoinsPerSecond(data: Types.PlayerData): number
+	local total = 0
+	for _, id in data.aquarium.displayedPearls do
+		local pearl = data.pearls[id]
+		local zoneIndex = if pearl then zoneIndexById[pearl.zoneId] else nil
+		if pearl and zoneIndex and pearlById[pearl.rarity] then
+			total += Formulas.pearlCoinsPerSecond(pearl.rarity, zoneIndex)
+		end
+	end
+	return total
 end
 
 function Formulas.cappedSum(values: { number }, cap: number): number
