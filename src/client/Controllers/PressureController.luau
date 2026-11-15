@@ -1,24 +1,22 @@
 --!strict
 -- Renders the Pressure Chamber state the server sends and asks the server to buy upgrades.
 -- It never computes depth or Coins itself. The layout lives in StarterGui.PressureGui (built in Studio).
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
+local AudioController = require("./AudioController")
+local Gui = require("../Gui")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Formulas = require(Shared:WaitForChild("Formulas"))
 local Remotes = require(Shared:WaitForChild("Remotes"))
 local Types = require(Shared:WaitForChild("Types"))
 
-local GUI_WAIT_SECONDS = 10
-local GAIN_FLOAT_INFO = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-local GAIN_FLOAT_RISE = UDim2.fromOffset(0, -40)
 local BAR_TWEEN_INFO = TweenInfo.new(0.3)
 local FLASH_SECONDS = 0.4
 local SMALL_GAIN = 10 -- below this, show one decimal so slow levels still show "+0.5 m"
-local CAN_BUY_COLOR = Color3.fromRGB(60, 200, 90)
-local CANNOT_BUY_COLOR = Color3.fromRGB(140, 140, 140)
-local FLASH_COLOR = Color3.fromRGB(230, 70, 70)
+local CAN_BUY_COLOR = Color3.fromRGB(70, 200, 90)
+local CANNOT_BUY_COLOR = Color3.fromRGB(140, 150, 160)
+local FLASH_COLOR = Color3.fromRGB(235, 70, 70)
 
 type Ui = {
 	gui: ScreenGui,
@@ -33,27 +31,20 @@ type Ui = {
 
 local PressureController = {}
 
-local function waitFor(parent: Instance, name: string): Instance
-	local child = parent:WaitForChild(name, GUI_WAIT_SECONDS)
-	assert(child, `PressureController: {parent:GetFullName()}.{name} is missing`)
-	return child
-end
-
 local function findUi(): Ui
-	local playerGui = waitFor(Players.LocalPlayer, "PlayerGui")
-	local gui = waitFor(playerGui, "PressureGui") :: ScreenGui
-	local top = waitFor(gui, "Top") :: GuiObject
-	local bar = waitFor(top, "ZoneBar")
-	local upgradePanel = waitFor(gui, "UpgradePanel")
+	local gui = Gui.screen("PressureGui")
+	local top = Gui.waitFor(gui, "Top") :: GuiObject
+	local bar = Gui.waitFor(top, "ZoneBar")
+	local upgradePanel = Gui.waitFor(gui, "UpgradePanel")
 	return {
 		gui = gui,
 		top = top,
-		depthLabel = waitFor(top, "DepthLabel") :: TextLabel,
-		gainTemplate = waitFor(top, "GainLabel") :: TextLabel,
-		barFill = waitFor(bar, "Fill") :: GuiObject,
-		zoneLabel = waitFor(bar, "ZoneLabel") :: TextLabel,
-		coinsLabel = waitFor(upgradePanel, "CoinsLabel") :: TextLabel,
-		upgradeButton = waitFor(upgradePanel, "UpgradeButton") :: TextButton,
+		depthLabel = Gui.waitFor(top, "DepthLabel") :: TextLabel,
+		gainTemplate = Gui.waitFor(top, "GainLabel") :: TextLabel,
+		barFill = Gui.waitFor(bar, "Fill") :: GuiObject,
+		zoneLabel = Gui.waitFor(bar, "ZoneLabel") :: TextLabel,
+		coinsLabel = Gui.waitFor(upgradePanel, "CoinsLabel") :: TextLabel,
+		upgradeButton = Gui.waitFor(upgradePanel, "UpgradeButton") :: TextButton,
 	}
 end
 
@@ -64,19 +55,10 @@ local function withCommas(value: number): string
 end
 
 local function floatGain(ui: Ui, gained: number)
-	local label = ui.gainTemplate:Clone()
-	label.Text = if gained < SMALL_GAIN then string.format("+%.1f m", gained) else `+{withCommas(gained)} m`
-	label.Visible = true
-	label.Parent = ui.top
-	local tween = TweenService:Create(label, GAIN_FLOAT_INFO, {
-		Position = label.Position + GAIN_FLOAT_RISE,
-		TextTransparency = 1,
-		TextStrokeTransparency = 1,
-	})
-	tween.Completed:Once(function()
-		label:Destroy()
-	end)
-	tween:Play()
+	Gui.floatText(
+		ui.gainTemplate,
+		if gained < SMALL_GAIN then string.format("+%.1f m", gained) else `+{withCommas(gained)} m`
+	)
 end
 
 local function renderZone(ui: Ui, depth: number)
@@ -126,7 +108,9 @@ function PressureController.init()
 		render(ui, state)
 	end)
 
+	Gui.bindPress(ui.upgradeButton)
 	ui.upgradeButton.Activated:Connect(function()
+		AudioController.play("Click")
 		local state = latest
 		if pending or not state then
 			return
@@ -134,7 +118,9 @@ function PressureController.init()
 		pending = true
 		local result: Types.PressureUpgradeResult = buyUpgrade:InvokeServer(state.level)
 		pending = false
-		if result.reason == "NotEnoughCoins" then
+		if result.ok then
+			AudioController.play("CollectRare")
+		elseif result.reason == "NotEnoughCoins" then
 			flashNotEnough(ui)
 		end
 	end)
